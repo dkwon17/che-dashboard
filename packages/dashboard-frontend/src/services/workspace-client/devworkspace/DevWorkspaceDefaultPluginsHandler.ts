@@ -11,9 +11,9 @@
  */
 
 import * as DwApi from '../../dashboard-backend-client/devWorkspaceApi';
+import * as CryptoJS from 'crypto-js';
 import devfileApi from '../../devfileApi';
 import { api } from '@eclipse-che/common';
-import { createHash } from 'crypto';
 import { injectable } from 'inversify';
 import { V1alpha2DevWorkspaceSpecTemplateComponents } from '@devfile/api';
 import { WorkspacesDefaultPlugins } from 'dashboard-frontend/src/store/Plugins/devWorkspacePlugins';
@@ -59,7 +59,7 @@ export class DevWorkspaceDefaultPluginsHandler {
 
     let componentsUpdated = this.removeDefaultUriPlugins(workspace, defaultUriPlugins);
     defaultUriPlugins.forEach(plugin => {
-      const hash = createHash('MD5').update(plugin).digest('hex').substring(0, 20).toLowerCase();
+      const hash = CryptoJS.MD5(plugin).toString().substring(0, 20).toLowerCase();
       const added = this.addDefaultPluginByUri(workspace, 'default-' + hash, plugin);
       componentsUpdated = added || componentsUpdated;
     });
