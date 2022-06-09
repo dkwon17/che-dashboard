@@ -28,7 +28,7 @@ import * as WorkspacesStore from '../../store/Workspaces';
 import * as DevWorkspacesStore from '../../store/Workspaces/devWorkspaces';
 import * as WorkspacesSettingsStore from '../../store/Workspaces/Settings';
 import { ResourceFetcherService } from '../resource-fetcher';
-import { IssuesReporterService } from './issuesReporter';
+import { IssuesReporterService, WorkspaceRoutes } from './issuesReporter';
 import { CheWorkspaceClient } from '../workspace-client/cheworkspace/cheWorkspaceClient';
 import { DevWorkspaceClient } from '../workspace-client/devworkspace/devWorkspaceClient';
 import { isDevworkspacesEnabled } from '../helpers/devworkspace';
@@ -38,6 +38,8 @@ import { selectDefaultNamespace } from '../../store/InfrastructureNamespaces/sel
 import { selectDevWorkspacesResourceVersion } from '../../store/Workspaces/devWorkspaces/selectors';
 import { AppAlerts } from '../alerts/appAlerts';
 import { AlertVariant } from '@patternfly/react-core';
+import SessionStorageService, { SessionStorageKey } from '../session-storage';
+import { ROUTE } from '../../route.enum';
 
 /**
  * This class executes a few initial instructions
@@ -80,10 +82,11 @@ export default class Bootstrap {
       this.fetchRegistriesMetadata(settings),
       this.watchNamespaces(),
       this.updateDevWorkspaceTemplates(settings),
-      this.fetchWorkspaces(),
+      this.fetchWorkspaces().then(() => this.checkInactivityShutdown()),
       this.fetchClusterInfo(),
       this.fetchClusterConfig(),
     ]);
+
     const errors = results
       .filter(result => result.status === 'rejected')
       .map(result => (result as PromiseRejectedResult).reason.toString());
@@ -266,5 +269,36 @@ export default class Bootstrap {
   private async fetchUserProfile(): Promise<void> {
     const { requestUserProfile } = UserProfileStore.actionCreators;
     return requestUserProfile()(this.store.dispatch, this.store.getState, undefined);
+  }
+
+  private checkInactivityShutdown() {
+    const path = SessionStorageService.remove(SessionStorageKey.ORIGINAL_LOCATION_PATH);
+    if (!path) {
+      return;
+    }
+
+    const state = this.store.getState();
+    const workspace = state.devWorkspaces.workspaces.find(w => w.status?.mainUrl?.includes(path));
+    if (!workspace) {
+      return;
+    }
+
+    const ideLoader = ROUTE.IDE_LOADER.replace(':namespace', workspace.metadata.namespace).replace(
+      ':workspaceName',
+      workspace.metadata.name,
+    );
+
+    const workspaceDetails = ROUTE.WORKSPACE_DETAILS.replace(
+      ':namespace',
+      workspace.metadata.namespace,
+    ).replace(':workspaceName', workspace.metadata.name);
+
+    this.issuesReporterService.registerIssue<WorkspaceRoutes>(
+      'workspaceStopped',
+      new Error(
+        'Your workspace has stopped. This could happen if your workspace shuts down due to inactivity.',
+      ),
+      { ideLoader, workspaceDetails },
+    );
   }
 }

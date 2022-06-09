@@ -10,10 +10,20 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
+import SessionStorageService, { SessionStorageKey } from '../services/session-storage';
+
 (function acceptNewFactoryLink(): void {
   if (window.location.pathname.startsWith('/dashboard/')) {
     return;
   }
+
+  if (window.location.pathname !== '/') {
+    SessionStorageService.update(
+      SessionStorageKey.ORIGINAL_LOCATION_PATH,
+      window.location.pathname,
+    );
+  }
+
   const hash = window.location.hash.replace(/(\/?)#(\/?)/, '#');
   if (hash.startsWith('#http')) {
     let factoryUrl = hash.substring(1);

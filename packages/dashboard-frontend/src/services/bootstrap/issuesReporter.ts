@@ -12,11 +12,14 @@
 
 import { injectable } from 'inversify';
 
-export type IssueType = 'cert' | 'sso' | 'unknown';
-export type Issue = {
+export type IssueType = 'cert' | 'sso' | 'workspaceStopped' | 'unknown';
+export type Issue<T = unknown> = {
   type: IssueType;
   error: Error;
+  data?: T;
 };
+
+export type WorkspaceRoutes = { ideLoader: string; workspaceDetails: string };
 
 @injectable()
 export class IssuesReporterService {
@@ -26,8 +29,8 @@ export class IssuesReporterService {
     return this.issues.length !== 0;
   }
 
-  public registerIssue(type: IssueType, error: Error): void {
-    this.issues.push({ type, error });
+  public registerIssue<T>(type: IssueType, error: Error, data?: T): void {
+    this.issues.push({ type, error, data });
   }
 
   public reportIssue(): Issue | undefined {
