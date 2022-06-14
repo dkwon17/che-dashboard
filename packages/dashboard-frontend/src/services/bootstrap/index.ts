@@ -39,7 +39,8 @@ import { selectDevWorkspacesResourceVersion } from '../../store/Workspaces/devWo
 import { AppAlerts } from '../alerts/appAlerts';
 import { AlertVariant } from '@patternfly/react-core';
 import SessionStorageService, { SessionStorageKey } from '../session-storage';
-import { ROUTE } from '../../route.enum';
+import { buildDetailsLocation, buildIdeLoaderLocation } from '../helpers/location';
+import { selectAllWorkspaces } from '../../store/Workspaces/selectors';
 
 /**
  * This class executes a few initial instructions
@@ -278,20 +279,19 @@ export default class Bootstrap {
     }
 
     const state = this.store.getState();
-    const workspace = state.devWorkspaces.workspaces.find(w => w.status?.mainUrl?.includes(path));
+
+    const workspace = selectAllWorkspaces(state).find(w => w.ideUrl?.includes(path));
     if (!workspace) {
       return;
     }
 
-    const ideLoader = ROUTE.IDE_LOADER.replace(':namespace', workspace.metadata.namespace).replace(
-      ':workspaceName',
-      workspace.metadata.name,
-    );
+    if (workspace.isRunning) {
+      window.location.href = workspace.ideUrl!;
+      return;
+    }
 
-    const workspaceDetails = ROUTE.WORKSPACE_DETAILS.replace(
-      ':namespace',
-      workspace.metadata.namespace,
-    ).replace(':workspaceName', workspace.metadata.name);
+    const ideLoader = buildIdeLoaderLocation(workspace).pathname;
+    const workspaceDetails = buildDetailsLocation(workspace).pathname;
 
     this.issuesReporterService.registerIssue<WorkspaceRoutes>(
       'workspaceStopped',
