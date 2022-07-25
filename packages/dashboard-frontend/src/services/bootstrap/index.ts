@@ -41,6 +41,9 @@ import { AlertVariant } from '@patternfly/react-core';
 import SessionStorageService, { SessionStorageKey } from '../session-storage';
 import { buildDetailsLocation, buildIdeLoaderLocation } from '../helpers/location';
 import { selectAllWorkspaces } from '../../store/Workspaces/selectors';
+import { Workspace } from '../workspace-adapter';
+import { DevWorkspaceStatus } from '../helpers/types';
+import { WorkspaceRunningError, WorkspaceStoppedDetector } from './workspaceStoppedDetector';
 
 /**
  * This class executes a few initial instructions
@@ -58,6 +61,9 @@ export default class Bootstrap {
 
   @lazyInject(AppAlerts)
   private readonly appAlerts: AppAlerts;
+
+  @lazyInject(WorkspaceStoppedDetector)
+  private readonly workspaceStoppedDetector: WorkspaceStoppedDetector;
 
   private store: Store<AppState>;
 
@@ -88,7 +94,7 @@ export default class Bootstrap {
       this.fetchRegistriesMetadata(),
       this.watchNamespaces(),
       this.updateDevWorkspaceTemplates(),
-      this.fetchWorkspaces().then(() => this.checkInactivityShutdown()),
+      this.fetchWorkspaces().then(() => this.checkWorkspaceShutdown()),
       this.fetchClusterInfo(),
       this.fetchClusterConfig(),
     ]);
@@ -296,33 +302,31 @@ export default class Bootstrap {
     return requestUserProfile()(this.store.dispatch, this.store.getState, undefined);
   }
 
-  private checkInactivityShutdown() {
-    const path = SessionStorageService.remove(SessionStorageKey.ORIGINAL_LOCATION_PATH);
-    if (!path) {
-      return;
-    }
-
-    const state = this.store.getState();
-
-    const workspace = selectAllWorkspaces(state).find(w => w.ideUrl?.includes(path));
-    if (!workspace) {
-      return;
-    }
-
-    if (workspace.isRunning && workspace.ideUrl) {
-      window.location.href = workspace.ideUrl;
-      return;
-    }
-
-    const ideLoader = buildIdeLoaderLocation(workspace).pathname;
-    const workspaceDetails = buildDetailsLocation(workspace).pathname;
-
-    this.issuesReporterService.registerIssue(
-      'workspaceInactive',
-      new Error(
-        'Your workspace has stopped. This could happen if your workspace shuts down due to inactivity.',
-      ),
-      { ideLoader, workspaceDetails },
+  private checkWorkspaceShutdown() {
+    const shutDownworkspace = this.workspaceStoppedDetector.checkWorkspaceShutdown(
+      this.store.getState(),
     );
+    if (!shutDownworkspace) {
+      return;
+    }
+
+    const ideLoader = buildIdeLoaderLocation(shutDownworkspace).pathname;
+    const workspaceDetails = buildDetailsLocation(shutDownworkspace).pathname;
+
+    try {
+      const message = this.workspaceStoppedDetector.getWorkspaceShutdownMessage(shutDownworkspace);
+      this.issuesReporterService.registerIssue('workspaceShutdown', new Error(message), {
+        ideLoader,
+        workspaceDetails,
+      });
+    } catch (e) {
+      if (e instanceof WorkspaceRunningError) {
+        // workspace is running, redirect to workspace url
+        if (shutDownworkspace.ideUrl) {
+          window.location.href = shutDownworkspace.ideUrl;
+          return;
+        }
+      }
+    }
   }
 }

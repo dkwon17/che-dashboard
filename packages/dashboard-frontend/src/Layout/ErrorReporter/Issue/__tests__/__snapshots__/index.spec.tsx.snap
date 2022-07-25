@@ -182,7 +182,7 @@ exports[`Issue component should render the certification error 1`] = `
 </div>
 `;
 
-exports[`Issue component should render the workspaceInactive error 1`] = `
+exports[`Issue component should render the workspaceShutdown error 1`] = `
 <div
   className="pf-c-content messageContainer"
 >
@@ -215,7 +215,7 @@ exports[`Issue component should render the workspaceInactive error 1`] = `
     className="errorMessage"
     data-pf-content={true}
   >
-    The workspace is inactive.
+    The workspace is not running.
   </pre>
   <p
     className=""

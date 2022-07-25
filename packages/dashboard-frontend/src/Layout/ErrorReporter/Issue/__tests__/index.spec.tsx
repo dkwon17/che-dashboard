@@ -44,10 +44,10 @@ describe('Issue component', () => {
     expect(renderer.create(component).toJSON()).toMatchSnapshot();
   });
 
-  it('should render the workspaceInactive error', () => {
+  it('should render the workspaceShutdown error', () => {
     const issue = {
-      type: 'workspaceInactive',
-      error: new Error('The workspace is inactive.'),
+      type: 'workspaceShutdown',
+      error: new Error('The workspace is not running.'),
       data: { ideLoader: '', workspaceDetails: '' },
     } as Issue;
     const component = <IssueComponent branding={brandingData} issue={issue} />;

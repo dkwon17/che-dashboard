@@ -32,8 +32,8 @@ export class IssueComponent extends React.PureComponent<Props> {
         return this.renderCertError();
       case 'sso':
         return this.renderSsoError(issue.error);
-      case 'workspaceInactive':
-        return this.renderWorkspaceInactiveError(issue.error, issue.data);
+      case 'workspaceShutdown':
+        return this.renderWorkspaceShutdownError(issue.error, issue.data);
       default:
         return this.renderUnknownError(issue.error);
     }
@@ -94,7 +94,7 @@ export class IssueComponent extends React.PureComponent<Props> {
     );
   }
 
-  private renderWorkspaceInactiveError(
+  private renderWorkspaceShutdownError(
     error: Error,
     workspaceRoutes: WorkspaceRoutes | undefined,
   ): React.ReactNode {
