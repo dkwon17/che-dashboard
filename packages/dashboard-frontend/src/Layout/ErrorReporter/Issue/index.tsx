@@ -13,6 +13,7 @@
 import { TextContent, Text, TextVariants } from '@patternfly/react-core';
 import { WarningTriangleIcon } from '@patternfly/react-icons';
 import React from 'react';
+import { workspace } from 'vscode';
 import { BrandingData } from '../../../services/bootstrap/branding.constant';
 import { Issue, WorkspaceRoutes } from '../../../services/bootstrap/issuesReporter';
 
@@ -105,26 +106,15 @@ export class IssueComponent extends React.PureComponent<Props> {
       };
     };
 
-    let ideLoader: React.ReactNode;
-    let workspaceDetails: React.ReactNode;
-
-    if (workspaceRoutes) {
-      ideLoader = (
-        <Text component={TextVariants.p}>
-          <a onClick={linkOnClick(workspaceRoutes.ideLoader)}>Restart your workspace</a>
-        </Text>
-      );
-
-      workspaceDetails = (
-        <Text component={TextVariants.p}>
-          <a onClick={linkOnClick(workspaceRoutes.workspaceDetails)}>Return to the dashboard</a>
-        </Text>
-      );
-    }
-
-    const warningTextbox = !error ? undefined : (
-      <Text component={TextVariants.pre} className={styles.errorMessage}>
+    const messageTextbox = !error ? undefined : (
+      <Text component={TextVariants.p}>
         {error.message}
+        {workspaceRoutes?.ideLoader && (
+          <span>
+            <a onClick={linkOnClick(workspaceRoutes.ideLoader)}>Restart your workspace</a> to
+            continue using the workspace.
+          </span>
+        )}
       </Text>
     );
 
@@ -134,9 +124,12 @@ export class IssueComponent extends React.PureComponent<Props> {
           <WarningTriangleIcon className={styles.warningIcon} />
           Warning
         </Text>
-        {warningTextbox}
-        {ideLoader}
-        {workspaceDetails}
+        {messageTextbox}
+        {workspaceRoutes?.workspaceDetails && (
+          <Text component={TextVariants.p}>
+            <a onClick={linkOnClick(workspaceRoutes.workspaceDetails)}>Return to dashboard</a>
+          </Text>
+        )}
       </TextContent>
     );
   }

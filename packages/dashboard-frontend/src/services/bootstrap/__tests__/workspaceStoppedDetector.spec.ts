@@ -10,16 +10,12 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
+import SessionStorageService, { SessionStorageKey } from '../../session-storage';
+
 describe('WorkspaceShutdownDetector', () => {
-  describe('update storageType', () => {
-    // new FakeStoreBuilder().build()
-    it('should correctly update a devfile with "persistent" storage', () => {
-        const devfileV1 = getDevfileWithPersistentStorage();
-        const devfileAdapter = new DevfileAdapter(devfileV1);
-
-        devfileAdapter.storageType = 'persistent';
-
-        expect(devfileAdapter.devfile.attributes).toBeUndefined();
-    });
-  }
+  it('update storageType', () => {
+    SessionStorageService.update(SessionStorageKey.ORIGINAL_LOCATION_PATH, '/workspaced5858247cc74458d/theia-ide/3100/');
+    const value = SessionStorageService.remove(SessionStorageKey.ORIGINAL_LOCATION_PATH);
+    
+  })
 });
