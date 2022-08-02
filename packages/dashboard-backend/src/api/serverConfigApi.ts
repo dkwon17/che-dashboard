@@ -26,6 +26,7 @@ export function registerServerConfigApi(server: FastifyInstance) {
     const plugins = serverConfigApi.getDefaultPlugins(cheCustomResource);
     const editor = serverConfigApi.getDefaultEditor(cheCustomResource);
     const components = serverConfigApi.getDefaultComponents(cheCustomResource);
+    const timeouts = serverConfigApi.getWorkspaceTimeouts(cheCustomResource);
 
     return {
       defaults: {
@@ -33,6 +34,7 @@ export function registerServerConfigApi(server: FastifyInstance) {
         plugins,
         components,
       },
+      timeouts,
     };
   });
 }

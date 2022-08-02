@@ -29,6 +29,7 @@ export async function getServerConfig(): Promise<{
     components: V220DevfileComponents[];
     editor: string | undefined;
   };
+  timeouts: any;
 }> {
   const url = `${prefix}/server-config`;
   try {

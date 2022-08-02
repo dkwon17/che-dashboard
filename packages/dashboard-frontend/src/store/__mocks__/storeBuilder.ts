@@ -48,6 +48,7 @@ export class FakeStoreBuilder {
           components: [],
           plugins: [],
         },
+        timeouts: undefined,
       } as ServerConfig,
     },
     clusterInfo: {

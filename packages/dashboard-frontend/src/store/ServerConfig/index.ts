@@ -23,6 +23,7 @@ export interface ServerConfig {
     components: V220DevfileComponents[];
     plugins: api.IWorkspacesDefaultPlugins[];
   };
+  timeouts: any;
 }
 
 export interface State {
@@ -85,6 +86,7 @@ const unloadedState: State = {
       components: [],
       plugins: [],
     },
+    timeouts: undefined,
   },
   error: undefined,
 };

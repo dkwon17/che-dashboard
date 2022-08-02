@@ -77,4 +77,11 @@ export class ServerConfigApi implements IServerConfigApi {
   getRunningWorkspacesLimit(cheCustomResource: { [key: string]: any }): number {
     return cheCustomResource.spec.devWorkspace.runningLimit || 1;
   }
+
+  getWorkspaceTimeouts(cheCustomResource: { [key: string]: any }) {
+    return {
+      idleTimeout: cheCustomResource.spec.devEnvironments.secondsOfInactivityBeforeIdling,
+      runTimeout: cheCustomResource.spec.devEnvironments.secondsOfRunBeforeIdling,
+    };
+  }
 }
