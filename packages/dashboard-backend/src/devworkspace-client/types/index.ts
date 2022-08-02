@@ -120,6 +120,16 @@ export interface IServerConfigApi {
    * Returns limit of running workspaces per user
    */
   getRunningWorkspacesLimit(cheCustomResource: { [key: string]: any }): number;
+
+  /**
+   * Returns the idle timeout
+   */
+  getWorkspaceIdleTimeout(cheCustomResource: { [key: string]: any }): number;
+
+  /**
+   * Returns the runtimeout
+   */
+  getWorkspaceRunTimeout(cheCustomResource: { [key: string]: any }): number;
 }
 
 export interface IKubeConfigApi {
