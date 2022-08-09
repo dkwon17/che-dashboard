@@ -42,3 +42,12 @@ commands:
       commandLine: "yarn test"
       group:
         kind: test
+projects:
+  - name: che-dashboard
+    git:
+      remotes:
+        upstream: https://github.com/eclipse-che/che-dashboard.git
+        origin: https://github.com/dkwon17/che-dashboard.git
+      checkoutFrom:
+        remote: upstream
+        revision: main
