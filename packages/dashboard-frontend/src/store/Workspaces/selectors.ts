@@ -87,6 +87,11 @@ export const selectAllWorkspacesByName = createSelector(selectAllWorkspaces, all
   }
   return allWorkspaces.sort(sortByNamespaceNameFn);
 });
+
+export const selectAllRunningWorkspaces = createSelector(selectAllWorkspaces, allWorkspaces => {
+  return allWorkspaces.filter(workspace => workspace.isRunning);
+});
+
 const sortByNamespaceNameFn = (workspaceA: Workspace, workspaceB: Workspace): -1 | 0 | 1 => {
   return sortByNamespaceFn(workspaceA, workspaceB) || sortByNameFn(workspaceA, workspaceB);
 };

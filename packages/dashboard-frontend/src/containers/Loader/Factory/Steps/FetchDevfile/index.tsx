@@ -308,6 +308,7 @@ class StepFetchDevfile extends AbstractLoaderStep<Props, State> {
       lastError === undefined
         ? undefined
         : {
+            // TODO
             key: 'factory-loader-fetch-devfile',
             title: 'Failed to create the workspace',
             variant: AlertVariant.danger,

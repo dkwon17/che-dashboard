@@ -42,6 +42,13 @@ import { delay } from '../../../services/helpers/delay';
 
 const devWorkspaceClient = container.get(DevWorkspaceClient);
 
+export class RunningLimitExceededError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'RunningLimitExceededError';
+  }
+}
+
 export const onStatusChangeCallbacks = new Map<string, (status: DevWorkspaceStatus) => void>();
 
 export interface State {
@@ -280,8 +287,7 @@ export const actionCreators: ActionCreators = {
     ): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch, getState): Promise<void> => {
       dispatch({ type: 'REQUEST_DEVWORKSPACE' });
-      // await delay(500);
-      // throw new Error('asdfjkl;');
+
       try {
         const { workspaces } = await devWorkspaceClient.getAllWorkspaces(
           workspace.metadata.namespace,
@@ -289,7 +295,8 @@ export const actionCreators: ActionCreators = {
         const runningWorkspaces = workspaces.filter(w => w.spec.started === true);
         const runningLimit = selectRunningWorkspacesLimit(getState());
         if (runningWorkspaces.length >= runningLimit) {
-          throw new Error('You are not allowed to start more workspaces.');
+          // TODO
+          throw new RunningLimitExceededError('You are not allowed to start more workspaces.');
         }
         await devWorkspaceClient.updateDebugMode(workspace, debugWorkspace);
         let updatedWorkspace: devfileApi.DevWorkspace;
@@ -350,6 +357,7 @@ export const actionCreators: ActionCreators = {
 
         devWorkspaceClient.checkForDevWorkspaceError(updatedWorkspace);
       } catch (e) {
+        // TODO
         const errorMessage =
           `Failed to start the workspace ${workspace.metadata.name}, reason: ` +
           common.helpers.errors.getMessage(e);
