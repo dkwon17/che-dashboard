@@ -7,7 +7,7 @@ attributes:
 components:
   - name: tools
     container:
-      image: quay.io/devfile/universal-developer-image:ubi8-latest
+      image: quay.io/devfile/universal-developer-image:ubi8-38da5c2
       memoryLimit: 6G
       mountSources: true
       endpoints:
