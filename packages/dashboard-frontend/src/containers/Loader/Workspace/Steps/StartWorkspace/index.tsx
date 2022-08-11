@@ -171,7 +171,14 @@ class StepStartWorkspace extends AbstractLoaderStep<Props, State> {
         // do not switch to the next step
         return false;
       } catch (e) {
-        throw new Error(common.helpers.errors.getMessage(e));
+        const message = common.helpers.errors.getMessage(e);
+
+        if (common.helpers.errors.isError(e)) {
+          // throw original error
+          e.message = message;
+          throw e;
+        }
+        throw new Error(message);
       }
     }
 

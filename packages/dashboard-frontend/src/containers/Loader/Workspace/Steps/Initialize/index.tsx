@@ -164,7 +164,6 @@ class StepInitialize extends AbstractLoaderStep<Props, State> {
             children: lastError.message,
             error: lastError.error,
           };
-    const fu = this.props.stopWorkspace;
     return (
       <WorkspaceLoaderPage
         alertItem={alertItem}
