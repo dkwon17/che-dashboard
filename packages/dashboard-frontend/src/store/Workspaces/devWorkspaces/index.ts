@@ -39,8 +39,6 @@ import { injectKubeConfig } from '../../../services/dashboard-backend-client/dev
 import { selectRunningWorkspacesLimit } from '../../ClusterConfig/selectors';
 import { cloneDeep } from 'lodash';
 import { delay } from '../../../services/helpers/delay';
-// import { isError } from '../../../services/helpers/errors';
-// packages/common/src/helpers/errors.ts
 
 const devWorkspaceClient = container.get(DevWorkspaceClient);
 
