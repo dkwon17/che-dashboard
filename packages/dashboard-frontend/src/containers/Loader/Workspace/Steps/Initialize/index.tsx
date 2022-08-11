@@ -161,9 +161,10 @@ class StepInitialize extends AbstractLoaderStep<Props, State> {
             key: 'ide-loader-initialize',
             title: 'Failed to open the workspace',
             variant: AlertVariant.danger,
-            children: lastError,
+            children: lastError.message,
+            error: lastError.error,
           };
-
+    const fu = this.props.stopWorkspace;
     return (
       <WorkspaceLoaderPage
         alertItem={alertItem}

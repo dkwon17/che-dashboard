@@ -199,7 +199,8 @@ class StepStartWorkspace extends AbstractLoaderStep<Props, State> {
             key: 'ide-loader-start-workspace',
             title: 'Failed to open the workspace',
             variant: AlertVariant.danger,
-            children: lastError,
+            children: lastError.message,
+            error: lastError.error,
           };
 
     return (

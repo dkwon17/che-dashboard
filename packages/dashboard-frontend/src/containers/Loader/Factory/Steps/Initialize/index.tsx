@@ -141,7 +141,7 @@ class StepInitialize extends AbstractLoaderStep<Props, State> {
             key: 'factory-loader-initialize',
             title: 'Failed to create the workspace',
             variant: AlertVariant.danger,
-            children: lastError,
+            children: lastError.message,
           };
 
     return (

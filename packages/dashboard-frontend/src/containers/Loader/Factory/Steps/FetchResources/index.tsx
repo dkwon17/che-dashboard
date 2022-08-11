@@ -146,7 +146,7 @@ class StepFetchResources extends AbstractLoaderStep<Props, State> {
     }
 
     if (shouldResolve === false) {
-      throw new Error(lastError || 'Failed to fetch pre-built resources');
+      throw new Error(lastError?.message || 'Failed to fetch pre-built resources');
     }
 
     await this.props.requestResources(sourceUrl);
@@ -186,7 +186,7 @@ class StepFetchResources extends AbstractLoaderStep<Props, State> {
             key: 'factory-loader-fetch-resources',
             title: 'Failed to create the workspace',
             variant: AlertVariant.danger,
-            children: lastError,
+            children: lastError.message,
           };
 
     return (

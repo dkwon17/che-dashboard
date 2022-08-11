@@ -170,7 +170,7 @@ class StepFetchDevfile extends AbstractLoaderStep<Props, State> {
     }
 
     if (shouldResolve === false) {
-      throw new Error(this.state.lastError || 'Failed to resolve the devfile.');
+      throw new Error(this.state.lastError?.message || 'Failed to resolve the devfile.');
     }
 
     // start resolving the devfile
@@ -308,11 +308,11 @@ class StepFetchDevfile extends AbstractLoaderStep<Props, State> {
       lastError === undefined
         ? undefined
         : {
-            // TODO
+            // TODO, when the devfile has typos
             key: 'factory-loader-fetch-devfile',
             title: 'Failed to create the workspace',
             variant: AlertVariant.danger,
-            children: lastError,
+            children: lastError.message,
           };
 
     return (

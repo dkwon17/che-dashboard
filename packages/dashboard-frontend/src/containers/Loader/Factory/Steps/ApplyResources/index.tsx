@@ -149,7 +149,9 @@ class StepApplyResources extends AbstractLoaderStep<Props, State> {
     }
 
     if (shouldCreate === false) {
-      throw new Error(this.state.lastError || 'The workspace creation unexpectedly failed.');
+      throw new Error(
+        this.state.lastError?.message || 'The workspace creation unexpectedly failed.',
+      );
     }
 
     const resources = devWorkspaceResources[sourceUrl]?.resources;
@@ -210,7 +212,7 @@ class StepApplyResources extends AbstractLoaderStep<Props, State> {
             key: 'factory-loader-' + getRandomString(4),
             title: 'Failed to create the workspace',
             variant: AlertVariant.danger,
-            children: lastError,
+            children: lastError.message,
           };
 
     return (

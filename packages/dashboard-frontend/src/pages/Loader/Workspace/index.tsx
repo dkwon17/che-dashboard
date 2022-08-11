@@ -13,15 +13,17 @@
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import * as WorkspaceStore from '../../../store/Workspaces';
-import { selectAllRunningWorkspaces } from '../../../store/Workspaces/selectors';
 import { LoaderStep } from '../../../components/Loader/Step';
 import { AlertItem, LoaderTab } from '../../../services/helpers/types';
 import { ActionCallback } from '../../../components/Loader/Alert';
-import { Workspace } from '../../../services/workspace-adapter';
+import { Workspace, WorkspaceAdapter } from '../../../services/workspace-adapter';
 
 import { CommonLoaderPage } from '../Common';
 import { AppState } from '../../../store';
 import { selectRunningWorkspacesLimit } from '../../../store/ClusterConfig/selectors';
+import { buildIdeLoaderLocation, toHref } from '../../../services/helpers/location';
+import { container } from '../../../inversify.config';
+import { DevWorkspaceClient } from '../../../services/workspace-client/devworkspace/devWorkspaceClient';
 
 export type Props = MappedProps & {
   alertItem: AlertItem | undefined;
@@ -34,11 +36,15 @@ export type Props = MappedProps & {
 export type State = {
   activeTabKey: LoaderTab;
   isPopupAlertVisible: boolean;
+  actionCallbacks: ActionCallback[];
 };
 
 class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
+  private readonly devWorkspaceClient: DevWorkspaceClient;
+
   constructor(props: Props) {
     super(props);
+    this.devWorkspaceClient = container.get(DevWorkspaceClient);
 
     const { tabParam } = this.props;
     const activeTabKey = tabParam && LoaderTab[tabParam] ? LoaderTab[tabParam] : LoaderTab.Progress;
@@ -46,7 +52,12 @@ class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
     this.state = {
       activeTabKey,
       isPopupAlertVisible: false,
+      actionCallbacks: [],
     };
+  }
+
+  componentDidMount() {
+    this.getActionCallbacks().then(actionCallbacks => this.setState({ actionCallbacks }));
   }
 
   private handleRestart(verbose: boolean): void {
@@ -62,37 +73,54 @@ class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
     });
   }
 
-  private getActionCallbacks(): ActionCallback[] {
-    if (this.props.runningWorkspaces.length < this.props.runningLimit) {
-      return [
-        {
-          title: 'Restart',
-          callback: () => this.handleRestart(false),
-        },
-        {
-          title: 'Open in Verbose mode',
-          callback: () => this.handleRestart(true),
-        },
-      ];
-    }
+  private async getActionCallbacks(): Promise<ActionCallback[]> {
+    // if (e instanceof WorkspaceRunningError) {
 
-    if (this.props.runningWorkspaces.length === 1) {
-      const runningWorkspace = this.props.runningWorkspaces[0];
-      return [
-        {
-          title: `Switch to open workspace (${runningWorkspace.name})`,
-          callback: () => alert(`switching to ${runningWorkspace.ideUrl}`),
-        },
-        {
-          title: `Close the open workspace (${runningWorkspace.name}) and restart ${this.props.workspace?.name}`,
-          callback: () => alert(`closing to ${runningWorkspace.name}`),
-        },
-      ];
+    const namespace = this.props.workspace?.namespace;
+    if (namespace) {
+      const { workspaces } = await this.devWorkspaceClient.getAllWorkspaces(namespace);
+      const runningWorkspaces = workspaces.filter(w => w.spec.started === true);
+      if (runningWorkspaces.length >= this.props.runningLimit) {
+        if (runningWorkspaces.length === 1) {
+          const runningWorkspace = new WorkspaceAdapter(runningWorkspaces[0]);
+          return [
+            {
+              title: `Switch to open workspace (${runningWorkspace.name})`,
+              callback: () => {
+                const ideLoader = buildIdeLoaderLocation(runningWorkspace);
+                const url = window.location.href.split('#')[0];
+                window.open(`${url}#${ideLoader.pathname}`, runningWorkspace.uid);
+              },
+            },
+            {
+              title: `Close the open workspace (${runningWorkspace.name}) and restart ${this.props.workspace?.name}`,
+              callback: () => {
+                alert(`closing ${runningWorkspace.name} with this.props.stopWorkspace`);
+                this.props.stopWorkspace(runningWorkspace);
+                // this.devWorkspaceClient.changeWorkspaceStatus(runningWorkspaces[0], false);
+              },
+            },
+          ];
+        }
+        return [
+          {
+            title: `Return to dashboard`,
+            callback: () => {
+              alert(`switching to dashboard`);
+              window.location.href = window.location.origin + '/dashboard/';
+            },
+          },
+        ];
+      }
     }
     return [
       {
-        title: `Return to dashboard`,
-        callback: () => alert(`switching to dashboard`),
+        title: 'Restart',
+        callback: () => this.handleRestart(false),
+      },
+      {
+        title: 'Open in Verbose mode',
+        callback: () => this.handleRestart(true),
       },
     ];
   }
@@ -101,11 +129,9 @@ class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
     const { alertItem, currentStepId, steps, workspace } = this.props;
     const { activeTabKey } = this.state;
 
-    const actionCallbacks: ActionCallback[] = this.getActionCallbacks();
-
     return (
       <CommonLoaderPage
-        actionCallbacks={actionCallbacks}
+        actionCallbacks={this.state.actionCallbacks}
         activeTabKey={activeTabKey}
         alertItem={alertItem}
         currentStepId={currentStepId}
@@ -118,7 +144,6 @@ class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
 }
 
 const mapStateToProps = (state: AppState) => ({
-  runningWorkspaces: selectAllRunningWorkspaces(state),
   runningLimit: selectRunningWorkspacesLimit(state),
 });
 
