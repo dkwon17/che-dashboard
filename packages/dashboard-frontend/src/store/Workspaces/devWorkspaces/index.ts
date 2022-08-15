@@ -422,6 +422,8 @@ export const actionCreators: ActionCreators = {
     (workspace: devfileApi.DevWorkspace): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch): Promise<void> => {
       try {
+        throw new Error('SOMETHING REALLY BAD HAPPENED!!!');
+
         // TODO
         await devWorkspaceClient.changeWorkspaceStatus(workspace, false);
         dispatch({

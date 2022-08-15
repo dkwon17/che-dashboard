@@ -35,6 +35,7 @@ export type Props = MappedProps & {
 export type State = {
   activeTabKey: LoaderTab;
   isPopupAlertVisible: boolean;
+  actionCallbacks: ActionCallback[];
 };
 
 class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
@@ -47,6 +48,7 @@ class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
     this.state = {
       activeTabKey,
       isPopupAlertVisible: false,
+      actionCallbacks: this.getActionCallbacks(),
     };
   }
 
@@ -93,7 +95,19 @@ class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
             title: `Close the open workspace (${runningWorkspace.name}) and restart ${this.props.workspace?.name}`,
             callback: () => {
               alert(`closing ${runningWorkspace.name} with this.props.stopWorkspace`);
-              this.props.stopWorkspace(runningWorkspace);
+              this.props.stopWorkspace(runningWorkspace).catch(err => {
+                console.log(`Error: ${JSON.stringify(err, null, 2)}`);
+                this.setState({
+                  actionCallbacks: [
+                    {
+                      title: `Return to dashboard (failed to stop running workspace)`,
+                      callback: () => {
+                        window.location.href = window.location.origin + '/dashboard/';
+                      },
+                    },
+                  ],
+                });
+              });
             },
           },
         ];
@@ -118,7 +132,7 @@ class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
 
     return (
       <CommonLoaderPage
-        actionCallbacks={this.getActionCallbacks()}
+        actionCallbacks={this.state.actionCallbacks}
         activeTabKey={activeTabKey}
         alertItem={alertItem}
         currentStepId={currentStepId}
