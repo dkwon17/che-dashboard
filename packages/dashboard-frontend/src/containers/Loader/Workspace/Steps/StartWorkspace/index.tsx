@@ -77,7 +77,7 @@ class StepStartWorkspace extends AbstractLoaderStep<Props, State> {
       return true;
     }
     // set the error for the current step
-    if (this.state.lastError !== nextState.lastError) {
+    if (this.state.lastError?.message !== nextState.lastError?.message) {
       return true;
     }
     return false;
@@ -175,6 +175,7 @@ class StepStartWorkspace extends AbstractLoaderStep<Props, State> {
 
         if (common.helpers.errors.isError(e)) {
           // throw original error
+          console.log(`Rrun step error: ${message}`);
           e.message = message;
           throw e;
         }

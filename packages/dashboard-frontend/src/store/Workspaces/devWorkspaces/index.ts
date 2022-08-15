@@ -294,6 +294,7 @@ export const actionCreators: ActionCreators = {
         );
         const runningWorkspaces = workspaces.filter(w => w.spec.started === true);
         const runningLimit = selectRunningWorkspacesLimit(getState());
+        console.log('START WORKSPACE!!');
         if (runningWorkspaces.length >= runningLimit) {
           throw new RunningWorkspacesExceededError('You are not allowed to start more workspaces.');
         }
@@ -367,10 +368,10 @@ export const actionCreators: ActionCreators = {
 
         if (common.helpers.errors.isError(e)) {
           // throw original error
+          console.log('startWorkspace: throwing original error');
           e.message = errorMessage;
           throw e;
         }
-
         throw errorMessage;
       }
     },
