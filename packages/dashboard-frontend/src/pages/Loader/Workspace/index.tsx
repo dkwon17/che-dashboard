@@ -35,7 +35,6 @@ export type Props = MappedProps & {
 export type State = {
   activeTabKey: LoaderTab;
   isPopupAlertVisible: boolean;
-  actionCallbacks: ActionCallback[];
 };
 
 class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
@@ -48,7 +47,6 @@ class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
     this.state = {
       activeTabKey,
       isPopupAlertVisible: false,
-      actionCallbacks: this.getActionCallbacks(),
     };
   }
 
@@ -84,7 +82,7 @@ class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
         const runningWorkspace = new WorkspaceAdapter(runningWorkspaces[0]);
         return [
           {
-            title: `Switch to open workspace (${runningWorkspace.name})`,
+            title: `Switch to running workspace (${runningWorkspace.name})`,
             callback: () => {
               const ideLoader = buildIdeLoaderLocation(runningWorkspace);
               const url = window.location.href.split('#')[0];
@@ -92,22 +90,16 @@ class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
             },
           },
           {
-            title: `Close the open workspace (${runningWorkspace.name}) and restart ${this.props.workspace?.name}`,
+            title: `Close running workspace (${runningWorkspace.name}) and restart ${this.props.workspace?.name}`,
             callback: () => {
-              alert(`closing ${runningWorkspace.name} with this.props.stopWorkspace`);
-              this.props.stopWorkspace(runningWorkspace).catch(err => {
-                console.log(`Error: ${JSON.stringify(err, null, 2)}`);
-                this.setState({
-                  actionCallbacks: [
-                    {
-                      title: `Return to dashboard (failed to stop running workspace)`,
-                      callback: () => {
-                        window.location.href = window.location.origin + '/dashboard/';
-                      },
-                    },
-                  ],
+              this.props
+                .stopWorkspace(runningWorkspace)
+                .then(() => {
+                  this.handleRestart(false);
+                })
+                .catch(err => {
+                  // TODO
                 });
-              });
             },
           },
         ];
@@ -132,7 +124,7 @@ class WorkspaceLoaderPage extends React.PureComponent<Props, State> {
 
     return (
       <CommonLoaderPage
-        actionCallbacks={this.state.actionCallbacks}
+        actionCallbacks={this.getActionCallbacks()}
         activeTabKey={activeTabKey}
         alertItem={alertItem}
         currentStepId={currentStepId}
