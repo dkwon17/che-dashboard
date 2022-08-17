@@ -287,7 +287,6 @@ export const actionCreators: ActionCreators = {
     ): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch, getState): Promise<void> => {
       dispatch({ type: 'REQUEST_DEVWORKSPACE' });
-
       try {
         const { workspaces } = await devWorkspaceClient.getAllWorkspaces(
           workspace.metadata.namespace,
@@ -365,8 +364,6 @@ export const actionCreators: ActionCreators = {
         });
 
         if (common.helpers.errors.isError(e)) {
-          // throw original error
-          e.message = errorMessage;
           throw e;
         }
         throw errorMessage;
