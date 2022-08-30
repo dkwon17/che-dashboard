@@ -2,8 +2,6 @@ schemaVersion: 2.1.0
 metadata:
   name: che-dashboard
   generateName: che-dashboard-
-attributes:
-  controller.devfile.io/scc: container-build
 components:
   - name: tools
     container:
