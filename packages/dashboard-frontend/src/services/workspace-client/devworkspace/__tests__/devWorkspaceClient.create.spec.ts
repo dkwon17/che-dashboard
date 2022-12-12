@@ -80,6 +80,7 @@ describe('DevWorkspace client, create', () => {
         undefined,
         undefined,
         undefined,
+        [],
         {},
       );
 
@@ -103,6 +104,31 @@ describe('DevWorkspace client, create', () => {
         undefined,
         undefined,
         'eclipse/theia/next',
+        [],
+        {},
+      );
+
+      expect(spyCreateWorkspace).toBeCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            annotations: expect.objectContaining({
+              'che.eclipse.org/che-editor': 'eclipse/theia/next',
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('should update remotes', async () => {
+      await client.createFromDevfile(
+        testDevfile,
+        namespace,
+        [],
+        undefined,
+        undefined,
+        undefined,
+        'eclipse/theia/next',
+        [],
         {},
       );
 
