@@ -39,8 +39,8 @@ import { AlertItem } from '../../../../../../services/helpers/types';
 import { selectDefaultDevfile } from '../../../../../../store/DevfileRegistries/selectors';
 import ExpandableWarning from '../../../../../../components/ExpandableWarning';
 import { getProjectFromUrl } from './getProjectFromUrl';
-import { getGitRemotes } from './getGitRemotes';
-import { V220DevfileProjects } from '@devfile/api';
+import { getGitRemotes, GitRemote } from './getGitRemotes';
+import { V220DevfileProjects, V220DevfileProjectsItemsGit } from '@devfile/api';
 import { getProjectName } from '../../../../../../services/helpers/getProjectName';
 
 export class CreateWorkspaceError extends Error {
@@ -331,8 +331,16 @@ class StepApplyDevfile extends AbstractLoaderStep<Props, State> {
     const gitProject = this.getGitProjectForRemotes(devfile.projects);
     if (gitProject) {
       // edit existing Git project remote
+      const checkoutFromRemote = parsedRemotes[0];
+      if (this.keepOriginalRevision(gitProject, checkoutFromRemote)) {
+        gitProject.checkoutFrom = {
+          remote: parsedRemotes[0].name,
+          revision: gitProject.checkoutFrom?.revision,
+        };
+      } else {
+        gitProject.checkoutFrom = { remote: parsedRemotes[0].name };
+      }
       gitProject.remotes = gitRemotes;
-      gitProject.checkoutFrom = { remote: parsedRemotes[0].name };
     } else {
       devfile.projects = [
         {
@@ -371,6 +379,25 @@ class StepApplyDevfile extends AbstractLoaderStep<Props, State> {
     }
 
     return undefined;
+  }
+
+  private keepOriginalRevision(
+    currentGitProject: V220DevfileProjectsItemsGit,
+    newCheckoutRemote: GitRemote,
+  ) {
+    if (!currentGitProject.checkoutFrom || !currentGitProject.checkoutFrom.revision) {
+      return false;
+    }
+
+    let revisionRemoteUrl;
+    if (currentGitProject.checkoutFrom.remote) {
+      revisionRemoteUrl = currentGitProject.remotes[currentGitProject.checkoutFrom.remote];
+    } else {
+      // if remote is not specified, there is only one remote to check
+      revisionRemoteUrl = Object.values(currentGitProject.remotes)[0];
+    }
+
+    return newCheckoutRemote.url === revisionRemoteUrl;
   }
 
   render(): React.ReactElement {
