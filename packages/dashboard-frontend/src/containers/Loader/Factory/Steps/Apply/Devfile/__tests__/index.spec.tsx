@@ -360,7 +360,7 @@ describe('Factory Loader container, step CREATE_WORKSPACE__APPLYING_DEVFILE', ()
         })
         .build();
 
-      // new origin branch provided
+      // new origin remote provided
       const remotesAttr =
         '{{origin,https://github.com/other-user/che-dashboard.git},{upstream,https://github.com/eclipse-che/che-dashboard.git},{fork,https://github.com/fork/che-dashboard.git}}';
       searchParams.append(REMOTES_ATTR, remotesAttr);
@@ -385,6 +385,116 @@ describe('Factory Loader container, step CREATE_WORKSPACE__APPLYING_DEVFILE', ()
             origin: 'https://github.com/other-user/che-dashboard.git',
             upstream: 'https://github.com/eclipse-che/che-dashboard.git',
             fork: 'https://github.com/fork/che-dashboard.git',
+          },
+        },
+      });
+    });
+
+    test('remove checkoutFrom revision if new checkout branch is different than current one', async () => {
+
+      dashboardDevfile.projects = [
+        {
+          name: 'dashboard',
+          git: {
+            checkoutFrom: {
+              revision: 'pr-branch'
+            },
+            remotes: {
+              origin: 'https://github.com/user/che-dashboard.git',
+            },
+          },
+        },
+      ];
+
+      const store = getStoreBuilder()
+        .withFactoryResolver({
+          resolver: {},
+          converted: {
+            devfileV2: dashboardDevfile,
+          },
+        })
+        .build();
+
+      // new origin remote is provided, therefore the checkout remote is different than current one
+      const remotesAttr =
+        '{{origin,https://github.com/other-user/che-dashboard.git},{upstream,https://github.com/eclipse-che/che-dashboard.git}}';
+      searchParams.append(REMOTES_ATTR, remotesAttr);
+
+      renderComponent(store, loaderSteps, searchParams);
+      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+
+      factoryId = `${REMOTES_ATTR}=${remotesAttr}&` + factoryId;
+
+      await waitFor(() =>
+        expect(prepareDevfile).toHaveBeenCalledWith(dashboardDevfile, factoryId, undefined, false),
+      );
+
+      expect(dashboardDevfile.projects).not.toBe(undefined);
+      expect(dashboardDevfile.projects!.length).toBe(1);
+      expect(dashboardDevfile.projects![0]).toMatchObject({
+        git: {
+          checkoutFrom: {
+            // check checkoutFrom.revision removed
+            remote: 'origin',
+          },
+          remotes: {
+            origin: 'https://github.com/other-user/che-dashboard.git',
+            upstream: 'https://github.com/eclipse-che/che-dashboard.git',
+          },
+        },
+      });
+    });
+
+    test('keep checkoutFrom revision if new checkout branch is the same as the current one', async () => {
+
+      dashboardDevfile.projects = [
+        {
+          name: 'dashboard',
+          git: {
+            checkoutFrom: {
+              revision: 'pr-branch'
+            },
+            remotes: {
+              origin: 'https://github.com/user/che-dashboard.git',
+            },
+          },
+        },
+      ];
+
+      const store = getStoreBuilder()
+        .withFactoryResolver({
+          resolver: {},
+          converted: {
+            devfileV2: dashboardDevfile,
+          },
+        })
+        .build();
+
+      // checkout remote is still origin:'https://github.com/user/che-dashboard.git'
+      const remotesAttr =
+        '{{upstream,https://github.com/eclipse-che/che-dashboard.git}}';
+      searchParams.append(REMOTES_ATTR, remotesAttr);
+
+      renderComponent(store, loaderSteps, searchParams);
+      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+
+      factoryId = `${REMOTES_ATTR}=${remotesAttr}&` + factoryId;
+
+      await waitFor(() =>
+        expect(prepareDevfile).toHaveBeenCalledWith(dashboardDevfile, factoryId, undefined, false),
+      );
+
+      expect(dashboardDevfile.projects).not.toBe(undefined);
+      expect(dashboardDevfile.projects!.length).toBe(1);
+      expect(dashboardDevfile.projects![0]).toMatchObject({
+        git: {
+          checkoutFrom: {
+            remote: 'origin',
+            revision: 'pr-branch'
+          },
+          remotes: {
+            origin: 'https://github.com/user/che-dashboard.git',
+            upstream: 'https://github.com/eclipse-che/che-dashboard.git',
           },
         },
       });

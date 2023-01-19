@@ -313,6 +313,8 @@ class StepApplyDevfile extends AbstractLoaderStep<Props, State> {
     remotes: string,
     isDefaultDevfile: boolean,
   ) {
+    alert('Inside of configure project remotes');
+    console.log('Inside of configure project remotes');
     const parsedRemotes = getGitRemotes(remotes);
 
     // Determine the remote to set `checkoutFrom.remote` to
@@ -333,7 +335,10 @@ class StepApplyDevfile extends AbstractLoaderStep<Props, State> {
       checkoutRemote = { name: 'origin', url: gitProject.remotes.origin };
     }
 
-    this.addRemotesToProject(gitProject!, checkoutRemote, parsedRemotes);
+    if (gitProject) {
+      this.removeCheckoutRevisionIfNeeded(gitProject, checkoutRemote);
+      this.addRemotesToProject(gitProject, checkoutRemote, parsedRemotes);
+    }
 
     if (isDefaultDevfile) {
       const projectName = getProjectName(checkoutRemote.url);
@@ -384,6 +389,35 @@ class StepApplyDevfile extends AbstractLoaderStep<Props, State> {
     }
 
     return undefined;
+  }
+
+  /**
+   * If checkout.revision already exists, delete it if the new checkout remote doesn't match
+   * the old one.
+   *
+   * If the new checkout remote doesn't match the old one, there is no guarantee that the
+   * new remote will contain the checkout.revision.
+   */
+  private removeCheckoutRevisionIfNeeded(
+    gitProject: V220DevfileProjectsItemsGit,
+    checkoutRemote: GitRemote,
+  ) {
+    if (gitProject.checkoutFrom?.revision) {
+      let remoteForRevision;
+
+      if (gitProject.checkoutFrom.remote) {
+        remoteForRevision = gitProject.remotes[gitProject.checkoutFrom.remote];
+      } else if (Object.values(gitProject.remotes).length === 1) {
+        remoteForRevision = Object.values(gitProject.remotes)[0];
+      } else {
+        // will never happen since this is an invalid devfile
+        // invalid devfile, cannot have > 1 remotes but no checkoutFrom.remote value
+      }
+
+      if (remoteForRevision && checkoutRemote.url !== remoteForRevision) {
+        delete gitProject.checkoutFrom.revision;
+      }
+    }
   }
 
   render(): React.ReactElement {
