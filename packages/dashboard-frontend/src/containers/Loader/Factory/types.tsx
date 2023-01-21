@@ -21,6 +21,7 @@ export type FactoryParams = {
   storageType: che.WorkspaceStorageType | undefined;
   cheEditor: string | undefined;
   remotes: string | undefined;
+  checkoutFrom: string | undefined;
 };
 
 export type PoliciesCreate = 'perclick' | 'peruser';

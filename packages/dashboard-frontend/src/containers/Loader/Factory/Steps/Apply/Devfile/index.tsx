@@ -42,6 +42,7 @@ import { getProjectFromUrl } from './getProjectFromUrl';
 import { getGitRemotes, GitRemote } from './getGitRemotes';
 import { V220DevfileProjects, V220DevfileProjectsItemsGit } from '@devfile/api';
 import { getProjectName } from '../../../../../../services/helpers/getProjectName';
+import { getCheckoutFrom } from './getCheckoutFrom';
 
 export class CreateWorkspaceError extends Error {
   constructor(message: string) {
@@ -142,7 +143,7 @@ class StepApplyDevfile extends AbstractLoaderStep<Props, State> {
   private updateCurrentDevfile(devfile: devfileApi.Devfile): void {
     const { factoryResolver, allWorkspaces, defaultDevfile } = this.props;
     const { factoryParams } = this.state;
-    const { factoryId, policiesCreate, sourceUrl, storageType, remotes } = factoryParams;
+    const { factoryId, policiesCreate, sourceUrl, storageType, remotes, checkoutFrom } = factoryParams;
 
     // when using the default devfile instead of a user devfile
     if (factoryResolver === undefined && isEqual(devfile, defaultDevfile)) {
@@ -161,8 +162,10 @@ class StepApplyDevfile extends AbstractLoaderStep<Props, State> {
       }
     }
 
-    if (remotes) {
-      this.configureProjectRemotes(devfile, remotes, isEqual(devfile, defaultDevfile));
+    // need to check, if a workspace is created from factory url with devfile
+    // , check if the git project already exists when we reach this point.
+    if (remotes || checkoutFrom) {
+      this.configureGitProject(devfile, remotes, checkoutFrom, isEqual(devfile, defaultDevfile));
     }
 
     // test the devfile name to decide if we need to append a suffix to is
@@ -308,43 +311,51 @@ class StepApplyDevfile extends AbstractLoaderStep<Props, State> {
     };
   }
 
-  private configureProjectRemotes(
+  private configureGitProject(
     devfile: devfileApi.Devfile,
-    remotes: string,
+    remotes: string | undefined,
+    checkoutFrom: string | undefined,
     isDefaultDevfile: boolean,
   ) {
-    alert('Inside of configure project remotes');
-    console.log('Inside of configure project remotes');
-    const parsedRemotes = getGitRemotes(remotes);
 
+    // Find the Git project in the devfile to configure
+    let gitProject = this.getGitProjectForConfiguringRemotes(devfile.projects);
+    if (remotes) {
+      this.configureProjectRemotes(gitProject!, remotes);
+      if (isDefaultDevfile && devfile.metadata.name) {
+        // const projectName = getProjectName();
+        // devfile.metadata.name = projectName;
+        // devfile.metadata.generateName = projectName;
+      }
+    }
+    if (checkoutFrom) {
+      this.configureProjectCheckoutFrom(gitProject!, checkoutFrom);
+    }
+
+
+  }
+
+
+  private configureProjectCheckoutFrom(
+    gitProject: V220DevfileProjectsItemsGit,
+    checkoutFrom: string,
+  ) {
+    const parsedCheckoutFrom = getCheckoutFrom(checkoutFrom);
+    gitProject.checkoutFrom = Object.assign(gitProject.checkoutFrom || {}, parsedCheckoutFrom);
+  }
+
+  private configureProjectRemotes(
+    gitProject: V220DevfileProjectsItemsGit,
+    remotes: string,
+  ) {
+    const parsedRemotes = getGitRemotes(remotes);
     // Determine the remote to set `checkoutFrom.remote` to
     let checkoutRemote = parsedRemotes.find(remote => remote.name === 'origin');
     if (!checkoutRemote) {
       checkoutRemote = parsedRemotes[0];
     }
-
-    // Find the Git project in the devfile to configure remotes for
-    let gitProject = this.getGitProjectForConfiguringRemotes(devfile.projects);
-    if (!gitProject) {
-      if (!devfile.projects) {
-        devfile.projects = [];
-      }
-      devfile.projects[0] = getProjectFromUrl(checkoutRemote.url, checkoutRemote.name);
-      gitProject = devfile.projects[0].git;
-    } else if (Object.keys(gitProject.remotes).includes('origin')) {
-      checkoutRemote = { name: 'origin', url: gitProject.remotes.origin };
-    }
-
-    if (gitProject) {
-      this.removeCheckoutRevisionIfNeeded(gitProject, checkoutRemote);
-      this.addRemotesToProject(gitProject, checkoutRemote, parsedRemotes);
-    }
-
-    if (isDefaultDevfile) {
-      const projectName = getProjectName(checkoutRemote.url);
-      devfile.metadata.name = projectName;
-      devfile.metadata.generateName = projectName;
-    }
+    this.addRemotesToProject(gitProject, checkoutRemote, parsedRemotes);
+    this.removeCheckoutRevisionIfNeeded(gitProject, checkoutRemote);
   }
 
   /**

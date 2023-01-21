@@ -20,6 +20,7 @@ import {
   POLICIES_CREATE_ATTR,
   STORAGE_TYPE_ATTR,
   REMOTES_ATTR,
+  CHECKOUT_FROM_ATTR,
 } from '../const';
 import { ErrorCode, FactoryParams, PoliciesCreate } from './types';
 
@@ -34,6 +35,7 @@ export default function (searchParams: URLSearchParams): FactoryParams {
     sourceUrl: getSourceUrl(searchParams),
     storageType: getStorageType(searchParams),
     remotes: getRemotes(searchParams),
+    checkoutFrom: getCheckoutFrom(searchParams),
     useDevworkspaceResources: getDevworkspaceResourcesUrl(searchParams) !== undefined,
   };
 }
@@ -78,6 +80,10 @@ function getErrorCode(searchParams: URLSearchParams): ErrorCode | undefined {
 
 function getRemotes(searchParams: URLSearchParams): string | undefined {
   return searchParams.get(REMOTES_ATTR) || undefined;
+}
+
+function getCheckoutFrom(searchParams: URLSearchParams): string | undefined {
+  return searchParams.get(CHECKOUT_FROM_ATTR) || undefined;
 }
 
 function buildFactoryId(searchParams: URLSearchParams): string {
