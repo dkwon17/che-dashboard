@@ -20,9 +20,26 @@ import { Workspace } from '../workspace-adapter';
 import { IssueType } from './issuesReporter';
 
 export class WorkspaceRunningError extends Error {
-  constructor(message) {
+
+  public workspace: Workspace;
+
+  /**
+   * Check if workspace is running or is about to run.
+   * If it is, throw error.
+   * 
+   * @param workspace the workspace to check
+   */
+  public static throwIfNeeded(workspace) {
+    if (workspace.isRunning || workspace.isStarting) {
+      const state = workspace.isRunning ? 'running' : 'starting';
+      throw new WorkspaceRunningError(`The workspace is ${state}.`, workspace);
+    }
+  }
+
+  constructor(message: string, workspace: Workspace) {
     super(message);
     this.name = 'WorkspaceRunningError';
+    this.workspace = workspace;
   }
 }
 
@@ -55,14 +72,12 @@ export class WorkspaceStoppedDetector {
     if (!path) {
       return;
     }
-    const workspace = selectAllWorkspaces(state).find(w => w.ideUrl?.includes(path));
+    const workspace = selectAllWorkspaces(state).find(w => path.includes(w.id));
     if (!workspace) {
       return;
     }
 
-    if (workspace.isRunning) {
-      throw new WorkspaceRunningError('The workspace is running.');
-    }
+    WorkspaceRunningError.throwIfNeeded(workspace);
 
     return workspace;
   }
@@ -74,9 +89,7 @@ export class WorkspaceStoppedDetector {
    * @returns an appropriate Error describing the stopped workspace if applicable
    */
   public getWorkspaceStoppedError(workspace: Workspace, issueType: IssueType): Error {
-    if (workspace.isRunning) {
-      throw new WorkspaceRunningError('The workspace is running.');
-    }
+    WorkspaceRunningError.throwIfNeeded(workspace);
 
     if (issueType === 'workspaceStoppedError') {
       const devworkspace = workspace.ref as devfileApi.DevWorkspace;
@@ -95,9 +108,7 @@ export class WorkspaceStoppedDetector {
    * @returns the reason why the workspace has stopped
    */
   public getWorkspaceStoppedIssueType(workspace: Workspace): IssueType {
-    if (workspace.isRunning) {
-      throw new WorkspaceRunningError('The workspace is running.');
-    }
+    WorkspaceRunningError.throwIfNeeded(workspace);
 
     const devworkspace = workspace.ref as devfileApi.DevWorkspace;
 
