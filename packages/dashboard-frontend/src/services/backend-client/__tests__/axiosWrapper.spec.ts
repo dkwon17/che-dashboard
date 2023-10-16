@@ -15,6 +15,7 @@ import mockAxios, { AxiosInstance } from 'axios';
 import {
   AxiosWrapper,
   bearerTokenAuthorizationIsRequiredErrorMsg,
+  cannotGetResourceErrorMessage,
 } from '@/services/backend-client/axiosWrapper';
 
 // mute console logs
@@ -37,16 +38,15 @@ describe('axiosWrapper', () => {
     const expectedData = { data: 'some-data' };
     axiosGetMock.mockReturnValue(new Promise(resolve => resolve(expectedData)));
 
-    const result = await new AxiosWrapper(
-      axiosInstance,
+    const result = await new AxiosWrapper(axiosInstance, [
       bearerTokenAuthorizationIsRequiredErrorMsg,
-    ).get('some-url');
+    ]).get('some-url');
 
     expect(result).toEqual(expectedData);
     expect(axiosGetSpy).toBeCalledTimes(1);
   });
 
-  it('should retry 0 time without specifi error message', async () => {
+  it('should retry 0 time without specific error message', async () => {
     const expectedData = { data: 'some-data' };
     axiosGetMock.mockReturnValue(new Promise(resolve => resolve(expectedData)));
 
@@ -62,16 +62,45 @@ describe('axiosWrapper', () => {
       .mockRejectedValueOnce(new Error(bearerTokenAuthorizationIsRequiredErrorMsg))
       .mockReturnValue(new Promise(resolve => resolve(expectedData)));
 
-    const result = await new AxiosWrapper(
-      axiosInstance,
+    const result = await new AxiosWrapper(axiosInstance, [
       bearerTokenAuthorizationIsRequiredErrorMsg,
-    ).get('some-url');
+    ]).get('some-url');
 
     expect(result).toEqual(expectedData);
     expect(axiosGetSpy).toBeCalledTimes(2);
   });
 
-  it('should retry 1 time without specif error message', async () => {
+  it('should retry 1 time with Bearer Token Authorization is required error message, multiple messages', async () => {
+    const expectedData = { data: 'some-data' };
+    axiosGetMock
+      .mockRejectedValueOnce(new Error(bearerTokenAuthorizationIsRequiredErrorMsg))
+      .mockReturnValue(new Promise(resolve => resolve(expectedData)));
+
+    const result = await new AxiosWrapper(axiosInstance, [
+      bearerTokenAuthorizationIsRequiredErrorMsg,
+      cannotGetResourceErrorMessage,
+    ]).get('some-url');
+
+    expect(result).toEqual(expectedData);
+    expect(axiosGetSpy).toBeCalledTimes(2);
+  });
+
+  it('should retry 1 time with cannot get resource error message, multiple messages', async () => {
+    const expectedData = { data: 'some-data' };
+    axiosGetMock
+      .mockRejectedValueOnce(new Error(cannotGetResourceErrorMessage))
+      .mockReturnValue(new Promise(resolve => resolve(expectedData)));
+
+    const result = await new AxiosWrapper(axiosInstance, [
+      bearerTokenAuthorizationIsRequiredErrorMsg,
+      cannotGetResourceErrorMessage,
+    ]).get('some-url');
+
+    expect(result).toEqual(expectedData);
+    expect(axiosGetSpy).toBeCalledTimes(2);
+  });
+
+  it('should retry 1 time without specific error message', async () => {
     const expectedData = { data: 'some-data' };
     axiosGetMock
       .mockRejectedValueOnce(new Error('some error message'))
@@ -90,10 +119,41 @@ describe('axiosWrapper', () => {
       .mockRejectedValueOnce(new Error(bearerTokenAuthorizationIsRequiredErrorMsg))
       .mockReturnValue(new Promise(resolve => resolve(expectedData)));
 
-    const result = await new AxiosWrapper(
-      axiosInstance,
+    const result = await new AxiosWrapper(axiosInstance, [
       bearerTokenAuthorizationIsRequiredErrorMsg,
-    ).get('some-url');
+    ]).get('some-url');
+
+    expect(result).toEqual(expectedData);
+    expect(axiosGetSpy).toBeCalledTimes(3);
+  });
+
+  it('should retry 2 times with Bearer Token Authorization is required error message, multiple messages', async () => {
+    const expectedData = { data: 'some-data' };
+    axiosGetMock
+      .mockRejectedValueOnce(new Error(bearerTokenAuthorizationIsRequiredErrorMsg))
+      .mockRejectedValueOnce(new Error(bearerTokenAuthorizationIsRequiredErrorMsg))
+      .mockReturnValue(new Promise(resolve => resolve(expectedData)));
+
+    const result = await new AxiosWrapper(axiosInstance, [
+      bearerTokenAuthorizationIsRequiredErrorMsg,
+      cannotGetResourceErrorMessage,
+    ]).get('some-url');
+
+    expect(result).toEqual(expectedData);
+    expect(axiosGetSpy).toBeCalledTimes(3);
+  });
+
+  it('should retry 2 times with cannot get resource error error message, multiple messages', async () => {
+    const expectedData = { data: 'some-data' };
+    axiosGetMock
+      .mockRejectedValueOnce(new Error(cannotGetResourceErrorMessage))
+      .mockRejectedValueOnce(new Error(cannotGetResourceErrorMessage))
+      .mockReturnValue(new Promise(resolve => resolve(expectedData)));
+
+    const result = await new AxiosWrapper(axiosInstance, [
+      bearerTokenAuthorizationIsRequiredErrorMsg,
+      cannotGetResourceErrorMessage,
+    ]).get('some-url');
 
     expect(result).toEqual(expectedData);
     expect(axiosGetSpy).toBeCalledTimes(3);
@@ -120,7 +180,26 @@ describe('axiosWrapper', () => {
       .mockRejectedValue(new Error(bearerTokenAuthorizationIsRequiredErrorMsg));
 
     try {
-      await new AxiosWrapper(axiosInstance, bearerTokenAuthorizationIsRequiredErrorMsg).get(
+      await new AxiosWrapper(axiosInstance, [
+        bearerTokenAuthorizationIsRequiredErrorMsg,
+        cannotGetResourceErrorMessage,
+      ]).get('some-url');
+      fail('should fail');
+    } catch (e: any) {
+      expect(e.message).toEqual(bearerTokenAuthorizationIsRequiredErrorMsg);
+      expect(axiosGetSpy).toBeCalledTimes(4);
+    }
+  });
+
+  it('should fail after 3 times with Bearer Token Authorization is required error message', async () => {
+    axiosGetMock
+      .mockRejectedValueOnce(new Error(bearerTokenAuthorizationIsRequiredErrorMsg))
+      .mockRejectedValueOnce(new Error(bearerTokenAuthorizationIsRequiredErrorMsg))
+      .mockRejectedValueOnce(new Error(bearerTokenAuthorizationIsRequiredErrorMsg))
+      .mockRejectedValue(new Error(bearerTokenAuthorizationIsRequiredErrorMsg));
+
+    try {
+      await new AxiosWrapper(axiosInstance, [bearerTokenAuthorizationIsRequiredErrorMsg]).get(
         'some-url',
       );
       fail('should fail');

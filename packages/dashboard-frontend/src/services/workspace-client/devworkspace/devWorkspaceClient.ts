@@ -16,7 +16,7 @@ import {
   V1alpha2DevWorkspaceTemplateSpecComponents,
   V221DevfileComponentsItemsContainer,
 } from '@devfile/api';
-import { api, KUBECONFIG_MOUNT_PATH } from '@eclipse-che/common';
+import { api } from '@eclipse-che/common';
 import { inject, injectable } from 'inversify';
 import { load } from 'js-yaml';
 import { cloneDeep, isEqual } from 'lodash';
@@ -276,7 +276,7 @@ export class DevWorkspaceClient {
       });
       envs.push({
         name: this.kubeconfigEnvName,
-        value: `${KUBECONFIG_MOUNT_PATH}/config`,
+        value: `/config`,
       });
       if (pluginRegistryUrl !== undefined) {
         envs.push({

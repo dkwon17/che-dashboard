@@ -18,20 +18,25 @@ type AxiosFunc = (url: string, config?: AxiosRequestConfig) => Promise<any>;
 type AxiosFuncWithData = (url: string, data?: any, config?: AxiosRequestConfig) => Promise<any>;
 
 export const bearerTokenAuthorizationIsRequiredErrorMsg = 'Bearer Token Authorization is required';
+export const cannotGetResourceErrorMessage =
+  'users.user.openshift.io "~" is forbidden: User "system:anonymous" cannot get resource "users" in API group "user.openshift.io" at the cluster scope';
 
 export class AxiosWrapper {
   protected readonly retryCount = 3;
   protected readonly retryDelay = 500;
   protected readonly axiosInstance: AxiosInstance;
-  protected readonly errorMessagesToRetry?: string;
+  protected readonly errorMessagesToRetry?: string[];
 
-  constructor(axiosInstance: AxiosInstance, errorMessagesToRetry?: string) {
+  constructor(axiosInstance: AxiosInstance, errorMessagesToRetry?: string[]) {
     this.axiosInstance = axiosInstance;
     this.errorMessagesToRetry = errorMessagesToRetry;
   }
 
   static createToRetryMissedBearerTokenError(): AxiosWrapper {
-    return new AxiosWrapper(axios.create(), bearerTokenAuthorizationIsRequiredErrorMsg);
+    return new AxiosWrapper(axios.create(), [
+      bearerTokenAuthorizationIsRequiredErrorMsg,
+      cannotGetResourceErrorMessage,
+    ]);
   }
 
   static createToRetryAnyErrors(): AxiosWrapper {
@@ -95,9 +100,14 @@ export class AxiosWrapper {
     try {
       return await fun();
     } catch (err) {
+      if (!retry) {
+        throw err;
+      }
+
       if (
-        !retry ||
-        (this.errorMessagesToRetry && !(err as Error)?.message?.includes(this.errorMessagesToRetry))
+        this.errorMessagesToRetry &&
+        !(err as Error)?.message &&
+        !this.errorMessagesToRetry.some(msg => (err as Error).message.includes(msg))
       ) {
         throw err;
       }
