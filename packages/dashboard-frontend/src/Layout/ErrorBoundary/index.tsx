@@ -100,7 +100,7 @@ export class ErrorBoundary extends React.PureComponent<Props, State> {
   }
 
   private testResourceNotFound(error: Error): boolean {
-    return /loading chunk [\d]+ failed/i.test(error.message);
+    return /loading (CSS\s)?chunk [\d]+ failed/i.test(error.message);
   }
 
   private handleToggleViewStack() {
@@ -186,7 +186,7 @@ export class ErrorBoundary extends React.PureComponent<Props, State> {
     if (countdownStopped === false) {
       title = (
         <>
-          {title} Refreshing a page to get newer resources in {secondsRemain}.
+          {title} Refreshing the page to get updated resources in {secondsRemain}.
         </>
       );
     }
