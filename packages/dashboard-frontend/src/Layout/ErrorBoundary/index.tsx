@@ -77,6 +77,7 @@ export class ErrorBoundary extends React.PureComponent<Props, State> {
     });
 
     if (this.testResourceNotFound(error)) {
+      this.reloadOnChunkForbiddenError(error);
       this.props.onError(error.message);
       this.setState({
         shouldReload: true,
@@ -99,8 +100,24 @@ export class ErrorBoundary extends React.PureComponent<Props, State> {
     this.toDispose.dispose();
   }
 
+  public reloadOnChunkForbiddenError(error: any) {
+    if (error.request) {
+      this.checkChunkRequestStatus(error.request).then(status => {
+        if (status === 403) {
+          window.location.reload();
+        }
+      });
+    }
+  }
+
+  public checkChunkRequestStatus(request: string) {
+    return fetch(request).then(response => {
+      return response.status;
+    });
+  }
+
   private testResourceNotFound(error: Error): boolean {
-    return /loading chunk [\d]+ failed/i.test(error.message);
+    return /loading (CSS\s)?chunk [\d]+ failed/i.test(error.message);
   }
 
   private handleToggleViewStack() {
@@ -186,7 +203,7 @@ export class ErrorBoundary extends React.PureComponent<Props, State> {
     if (countdownStopped === false) {
       title = (
         <>
-          {title} Refreshing a page to get newer resources in {secondsRemain}.
+          {title} Refreshing the page to get updated resources in {secondsRemain}.
         </>
       );
     }
