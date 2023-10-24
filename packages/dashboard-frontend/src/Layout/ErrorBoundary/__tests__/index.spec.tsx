@@ -35,6 +35,13 @@ export class NoResourceComponent extends React.Component {
   }
 }
 
+export class NoCSSResourceComponent extends React.Component {
+  render() {
+    throw new Error('Loading CSS chunk 23 failed.');
+    return <span>component</span>;
+  }
+}
+
 // mute the outputs
 console.error = jest.fn();
 
@@ -109,6 +116,18 @@ describe('Error boundary', () => {
       ).toBeTruthy();
     });
 
+    it('should inform users that CSS resources are missed', () => {
+      const errorBoundary = wrapComponent(<NoCSSResourceComponent />);
+      render(errorBoundary);
+
+      expect(mockOnError).toHaveBeenCalledWith('Loading CSS chunk 23 failed.');
+      expect(
+        screen.queryByText('The application has been likely updated on the server.', {
+          exact: false,
+        }),
+      ).toBeTruthy();
+    });
+
     it('should provide the countdown to the next page reload', () => {
       jest.useFakeTimers();
 
@@ -117,7 +136,7 @@ describe('Error boundary', () => {
 
       expect(mockOnError).toHaveBeenCalledWith('Loading chunk 23 failed.');
       expect(
-        screen.queryByText('Refreshing a page to get newer resources in', { exact: false }),
+        screen.queryByText('Refreshing the page to get updated resources in', { exact: false }),
       ).toBeTruthy();
       expect(screen.queryByText('30 seconds', { exact: false })).toBeTruthy();
 
@@ -134,7 +153,7 @@ describe('Error boundary', () => {
 
       expect(mockOnError).toHaveBeenCalledWith('Loading chunk 23 failed.');
       expect(
-        screen.queryByText('Refreshing a page to get newer resources in', { exact: false }),
+        screen.queryByText('Refreshing the page to get updated resources in', { exact: false }),
       ).toBeFalsy();
     });
 

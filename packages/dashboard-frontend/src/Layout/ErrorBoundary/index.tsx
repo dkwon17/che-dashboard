@@ -24,6 +24,7 @@ import React, { ErrorInfo, PropsWithChildren } from 'react';
 import Pluralize from 'react-pluralize';
 
 import { DisposableCollection } from '@/services/helpers/disposable';
+import { signIn } from '@/services/helpers/login';
 
 export const STORAGE_KEY_RELOAD_NUMBER = 'UD:ErrorBoundary:reloaded';
 const RELOAD_TIMEOUT_SEC = 30;
@@ -69,7 +70,7 @@ export class ErrorBoundary extends React.PureComponent<Props, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+  async componentDidCatch(error: Error, errorInfo: ErrorInfo): Promise<void> {
     this.setState({
       hasError: true,
       error,
@@ -77,6 +78,12 @@ export class ErrorBoundary extends React.PureComponent<Props, State> {
     });
 
     if (this.testResourceNotFound(error)) {
+      if ((error as any).request) {
+        const status = await this.checkChunkRequestStatus((error as any).request);
+        if (status === 403) {
+          signIn();
+        }
+      }
       this.props.onError(error.message);
       this.setState({
         shouldReload: true,
@@ -99,8 +106,18 @@ export class ErrorBoundary extends React.PureComponent<Props, State> {
     this.toDispose.dispose();
   }
 
+  public checkChunkRequestStatus(request: string): Promise<number | undefined> {
+    return fetch(request)
+      .then(response => {
+        return response.status;
+      })
+      .catch(() => {
+        return undefined;
+      });
+  }
+
   private testResourceNotFound(error: Error): boolean {
-    return /loading chunk [\d]+ failed/i.test(error.message);
+    return /loading (CSS\s)?chunk [\d]+ failed/i.test(error.message);
   }
 
   private handleToggleViewStack() {
@@ -186,7 +203,7 @@ export class ErrorBoundary extends React.PureComponent<Props, State> {
     if (countdownStopped === false) {
       title = (
         <>
-          {title} Refreshing a page to get newer resources in {secondsRemain}.
+          {title} Refreshing the page to get updated resources in {secondsRemain}.
         </>
       );
     }
