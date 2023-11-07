@@ -23,7 +23,8 @@ export const bearerTokenAuthorizationIsRequiredErrorMsg = 'Bearer Token Authoriz
 
 export class AxiosWrapper {
   protected readonly retryCount = 3;
-  protected readonly retryDelay = 500;
+  protected readonly base = 1.5;
+  protected readonly initialRetryDelay = 500;
   protected readonly axiosInstance: AxiosInstance;
   protected readonly errorMessagesToRetry?: string;
 
@@ -106,8 +107,9 @@ export class AxiosWrapper {
       }
 
       // Retry the request after a delay.
-      console.warn(`Retrying request to ${url} in ${this.retryDelay} ms, ${retry} left`);
-      await delay(this.retryDelay);
+      const expDelay = this.initialRetryDelay * this.base ** (this.retryCount - retry);
+      console.warn(`Retrying request to ${url} in ${expDelay} ms, ${retry} left`);
+      await delay(expDelay);
 
       return await this.doRetryFunc(fun, url, --retry);
     }
