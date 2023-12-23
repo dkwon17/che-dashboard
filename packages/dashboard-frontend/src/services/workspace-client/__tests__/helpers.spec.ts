@@ -24,6 +24,7 @@ import {
   isUnauthorized,
 } from '@/services/workspace-client/helpers';
 import { FakeStoreBuilder } from '@/store/__mocks__/storeBuilder';
+import * as getEditorModule from '@/store/DevfileRegistries/getEditor';
 
 describe('Workspace-client helpers', () => {
   describe('get an error message', () => {
@@ -265,7 +266,36 @@ describe('Workspace-client helpers', () => {
           store.getState,
         );
 
-        expect(customEditor).toEqual(dump(editor));
+        expect(customEditor?.content).toEqual(dump(editor));
+      });
+
+      it('should return editor id if provided in che-editor file', async () => {
+        const editorContent = {
+          schemaVersion: '2.1.0',
+          metadata: {
+            name: 'test-editor',
+            namespace: 'che',
+          },
+        };
+
+        jest
+          .spyOn(getEditorModule, 'getEditor')
+          .mockResolvedValueOnce({
+            editorYamlUrl: 'test-editor-yaml',
+            content: JSON.stringify(editorContent),
+          });
+
+        optionalFilesContent[CHE_EDITOR_YAML_PATH] = dump({ id: 'test-editor' });
+        const store = new FakeStoreBuilder().build();
+
+        const customEditor = await getCustomEditor(
+          pluginRegistryUrl,
+          optionalFilesContent,
+          store.dispatch,
+          store.getState,
+        );
+
+        expect(customEditor?.editorId).toEqual('test-editor');
       });
 
       it('should return an overridden devfile', async () => {
@@ -289,7 +319,7 @@ describe('Workspace-client helpers', () => {
           store.getState,
         );
 
-        expect(customEditor).toEqual(expect.stringContaining('memoryLimit: 1234Mi'));
+        expect(customEditor?.content).toEqual(expect.stringContaining('memoryLimit: 1234Mi'));
       });
 
       it('should throw the "missing metadata.name" error message', async () => {
@@ -341,7 +371,7 @@ describe('Workspace-client helpers', () => {
             store.getState,
           );
 
-          expect(customEditor).toEqual(dump(editor));
+          expect(customEditor?.content).toEqual(dump(editor));
         });
 
         it('should return an overridden devfile', async () => {
@@ -374,7 +404,7 @@ describe('Workspace-client helpers', () => {
             store.getState,
           );
 
-          expect(customEditor).toEqual(expect.stringContaining('memoryLimit: 1234Mi'));
+          expect(customEditor?.content).toEqual(expect.stringContaining('memoryLimit: 1234Mi'));
         });
 
         it('should throw the "missing metadata.name" error message', async () => {
@@ -435,7 +465,7 @@ describe('Workspace-client helpers', () => {
             store.getState,
           );
 
-          expect(customEditor).toEqual(dump(editor));
+          expect(customEditor?.content).toEqual(dump(editor));
         });
 
         it('should return an overridden devfile', async () => {
@@ -469,7 +499,7 @@ describe('Workspace-client helpers', () => {
             store.getState,
           );
 
-          expect(customEditor).toEqual(expect.stringContaining('memoryLimit: 1234Mi'));
+          expect(customEditor?.content).toEqual(expect.stringContaining('memoryLimit: 1234Mi'));
         });
 
         it('should throw the "missing metadata.name" error message', async () => {

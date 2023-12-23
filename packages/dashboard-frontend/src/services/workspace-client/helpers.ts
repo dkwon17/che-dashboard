@@ -119,6 +119,11 @@ function hasStatus(error: unknown, _status: number): boolean {
 
 export const CHE_EDITOR_YAML_PATH = '.che/che-editor.yaml';
 
+export interface CumstomEditor {
+  content: string;
+  editorId?: string;
+}
+
 /**
  * Look for the custom editor in .che/che-editor.yaml
  */
@@ -127,7 +132,7 @@ export async function getCustomEditor(
   optionalFilesContent: { [fileName: string]: string },
   dispatch: ThunkDispatch<AppState, unknown, KnownAction>,
   getState: () => AppState,
-): Promise<string | undefined> {
+): Promise<CumstomEditor | undefined> {
   let editorsDevfile: devfileApi.Devfile | undefined;
 
   // do we have a custom editor specified in the repository ?
@@ -135,6 +140,7 @@ export async function getCustomEditor(
     ? (load(optionalFilesContent[CHE_EDITOR_YAML_PATH]) as ICheEditorYaml)
     : undefined;
 
+  let editorId;
   if (cheEditorYaml) {
     // check the content of cheEditor file
     console.debug('Using the repository .che/che-editor.yaml file', cheEditorYaml);
@@ -155,6 +161,7 @@ export async function getCustomEditor(
       } else {
         repositoryEditorYamlUrl = `${pluginRegistryUrl}/plugins/${cheEditorYaml.id}/devfile.yaml`;
       }
+      editorId = cheEditorYaml.id;
     } else if (cheEditorYaml.reference) {
       // load the content of this editor
       console.debug(`Loading editor from reference ${cheEditorYaml.reference}`);
@@ -207,7 +214,7 @@ export async function getCustomEditor(
         'Failed to analyze the editor devfile, reason: Missing metadata.name attribute in the editor yaml file.',
       );
     }
-    return dump(editorsDevfile);
+    return { content: dump(editorsDevfile), editorId };
   }
 
   return undefined;

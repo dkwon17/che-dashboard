@@ -819,7 +819,7 @@ export const actionCreators: ActionCreators = {
       let editorContent: string | undefined;
       let editorYamlUrl: string | undefined;
       // do we have an optional editor parameter ?
-      const editor = attributes.cheEditor;
+      let editor = attributes.cheEditor;
       if (editor) {
         const response = await getEditor(editor, dispatch, getState, pluginRegistryUrl);
         if (response.content) {
@@ -831,7 +831,7 @@ export const actionCreators: ActionCreators = {
       } else {
         // do we have the custom editor in `.che/che-editor.yaml` ?
         try {
-          editorContent = await getCustomEditor(
+          const customEditor = await getCustomEditor(
             pluginRegistryUrl,
             optionalFilesContent,
             dispatch,
@@ -840,6 +840,8 @@ export const actionCreators: ActionCreators = {
           if (!editorContent) {
             console.warn('No custom editor found');
           }
+          editorContent = customEditor?.content;
+          editor = customEditor?.editorId;
         } catch (e) {
           console.warn('Failed to get custom editor', e);
         }
@@ -855,6 +857,7 @@ export const actionCreators: ActionCreators = {
           } else {
             throw new Error(response.error);
           }
+          editor = defaultsEditor;
           console.debug(`Using default editor ${defaultsEditor}`);
         }
       }
