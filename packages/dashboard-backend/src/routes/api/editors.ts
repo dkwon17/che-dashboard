@@ -11,13 +11,13 @@
  */
 
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { dump } from 'js-yaml';
 
 import { baseApiPath } from '@/constants/config';
+import { EditorNotFoundError } from '@/devworkspaceClient/services/editorsApi';
 import { getDevWorkspaceClient } from '@/routes/api/helpers/getDevWorkspaceClient';
 import { getServiceAccountToken } from '@/routes/api/helpers/getServiceAccountToken';
 import { getSchema } from '@/services/helpers';
-import { dump } from 'js-yaml';
-import { EditorNotFoundError } from '@/devworkspaceClient/services/editorsApi';
 
 const tags = ['Editor Definitions'];
 
